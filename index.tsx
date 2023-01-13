@@ -26,10 +26,10 @@ const render = (status: Status) => {
 
 const App: React.VFC = () => {
   const [clicks, setClicks] = React.useState<google.maps.LatLng[]>([]);
-  const [zoom, setZoom] = React.useState(3); // initial zoom
+  const [zoom, setZoom] = React.useState(10); // initial zoom
   const [center, setCenter] = React.useState<google.maps.LatLngLiteral>({
-    lat: 0,
-    lng: 0,
+    lat: 45.5152,
+    lng: -122.6784,
   });
 
   const onClick = (e: google.maps.MapMouseEvent) => {

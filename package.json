@@ -1,23 +1,4 @@
 {
-  "name": "react-map",
-  "description": "Samples for Google Maps JavaScript",
-  "version": "2.1.4",
-  "keywords": [
-    "google",
-    "javascript",
-    "maps",
-    "samples"
-  ],
-  "homepage": "https://github.com/googlemaps/js-samples#readme",
-  "bugs": {
-    "url": "https://github.com/googlemaps/js-samples/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/googlemaps/js-samples.git"
-  },
-  "files": [],
-  "license": "Apache-2.0",
   "scripts": {
     "dev": "vite",
     "start": "vite",
