@@ -1,112 +1,145 @@
-/*
- * Copyright 2021 Google LLC. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-import * as React from "react";
-import { createRoot } from "react-dom/client";
-import { Wrapper, Status } from "@googlemaps/react-wrapper";
-import { createCustomEqual } from "fast-equals";
-import { isLatLngLiteral } from "@googlemaps/typescript-guards";
-
+import * as React from 'react';
+import { createRoot } from 'react-dom/client';
+import { Wrapper, Status } from '@googlemaps/react-wrapper';
+import { createCustomEqual } from 'fast-equals';
+import { isLatLngLiteral } from '@googlemaps/typescript-guards';
+import ReactModal from 'react-modal';
+import cannedData from './CannedData.json';
 const render = (status: Status) => {
   return <h1>{status}</h1>;
 };
 
+const customStyles = {
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)',
+  },
+};
+ReactModal.setAppElement('#root');
 const App: React.VFC = () => {
-  const [clicks, setClicks] = React.useState<google.maps.LatLng[]>([]);
-  const [zoom, setZoom] = React.useState(10); // initial zoom
-  const [center, setCenter] = React.useState<google.maps.LatLngLiteral>({
+  let defaultCenter = React.useState<google.maps.LatLngLiteral>({
     lat: 45.5152,
     lng: -122.6784,
   });
-
-  const onClick = (e: google.maps.MapMouseEvent) => {
-    // avoid directly mutating state
-    setClicks([...clicks, e.latLng!]);
-  };
+  const [clicks, setClicks] = React.useState<google.maps.LatLng[]>([]);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [zoom, setZoom] = React.useState(10); // initial zoom
+  const [center, setCenter] = defaultCenter;
+  const [messageModalOpen, setMessageModalOpen] =
+    React.useState<boolean>(false);
 
   const onIdle = (m: google.maps.Map) => {
-    console.log("onIdle");
+    console.log('onIdle');
     setZoom(m.getZoom()!);
     setCenter(m.getCenter()!.toJSON());
+    setClicks(cannedData.data);
+  };
+
+  const handleCloseModal = () => {
+    setMessageModalOpen(false);
+  };
+
+  const resetZoomAndCenter = () => {
+    setCenter(defaultCenter);
+    setZoom(10);
+  };
+  const handleSearch = (e: any) => {
+    setSearchTerm(e.target.value);
+  };
+
+  function search(items) {
+    return items.filter((item) => {
+      return item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+  }
+
+  const handleContextMenu = (event) => {
+    event.preventDefault();
+    let objectIndex = event.currentTarget.getAttribute('id');
+    console.log(clicks[objectIndex]);
+    setCenter(clicks[objectIndex]);
+    setZoom(12);
   };
 
   const form = (
     <div
       style={{
-        padding: "1rem",
-        flexBasis: "250px",
-        height: "100%",
-        overflow: "auto",
+        padding: '1rem',
+        flexBasis: '250px',
+        height: '100%',
+        overflow: 'auto',
       }}
     >
-      <label htmlFor="zoom">Zoom</label>
+      <button onClick={() => resetZoomAndCenter()}>
+        Reset Zoom and Center
+      </button>
+      <label htmlFor="zoom">Search</label>
       <input
-        type="number"
-        id="zoom"
-        name="zoom"
-        value={zoom}
-        onChange={(event) => setZoom(Number(event.target.value))}
+        type="text"
+        id="Search"
+        name="Search"
+        onChange={(event) => handleSearch(event)}
       />
       <br />
-      <label htmlFor="lat">Latitude</label>
-      <input
-        type="number"
-        id="lat"
-        name="lat"
-        value={center.lat}
-        onChange={(event) =>
-          setCenter({ ...center, lat: Number(event.target.value) })
-        }
-      />
-      <br />
-      <label htmlFor="lng">Longitude</label>
-      <input
-        type="number"
-        id="lng"
-        name="lng"
-        value={center.lng}
-        onChange={(event) =>
-          setCenter({ ...center, lng: Number(event.target.value) })
-        }
-      />
-      <h3>{clicks.length === 0 ? "Click on map to add markers" : "Clicks"}</h3>
-      {clicks.map((latLng, i) => (
-        <pre key={i}>{JSON.stringify(latLng.toJSON(), null, 2)}</pre>
+      <h4>{clicks.length === 0 ? 'No Markers' : 'Markers'}</h4>
+      {search(clicks).map((latLng, i) => (
+        <pre
+          id={i}
+          key={i.toString()}
+          onContextMenu={(event) => handleContextMenu(event)}
+        >
+          {latLng.name}
+        </pre>
       ))}
-      <button onClick={() => setClicks([])}>Clear</button>
     </div>
   );
 
   return (
-    <div style={{ display: "flex", height: "100%" }}>
-      <Wrapper apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY!} render={render}>
+    <div id="AppContainer" style={{ display: 'flex', height: '100%' }}>
+      <Wrapper
+        apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY!}
+        render={render}
+      >
         <Map
           center={center}
-          onClick={onClick}
           onIdle={onIdle}
           zoom={zoom}
-          style={{ flexGrow: "1", height: "100%" }}
+          style={{ flexGrow: '1', height: '100%' }}
         >
-          {clicks.map((latLng, i) => (
-            <Marker key={i} position={latLng} />
+          {search(clicks).map((latLng, i) => (
+            <Marker
+              key={i}
+              position={latLng}
+              onClick={setMessageModalOpen}
+              title={clicks[i].name}
+            />
           ))}
         </Map>
       </Wrapper>
       {/* Basic form for controlling center and zoom of map. */}
       {form}
+      <ReactModal
+        isOpen={messageModalOpen}
+        contentLabel="Example Modal"
+        style={customStyles}
+        onRequestClose={handleCloseModal}
+        shouldCloseOnOverlayClick={true}
+      >
+        <h2>Hello</h2>
+        <button onClick={handleCloseModal}>close</button>
+        <div>I am a modal</div>
+        <form>
+          <input />
+          <button>tab navigation</button>
+          <button>stays</button>
+          <button>inside</button>
+          <button>the modal</button>
+        </form>
+      </ReactModal>
     </div>
   );
 };
@@ -143,16 +176,16 @@ const Map: React.FC<MapProps> = ({
 
   React.useEffect(() => {
     if (map) {
-      ["click", "idle"].forEach((eventName) =>
+      ['click', 'idle'].forEach((eventName) =>
         google.maps.event.clearListeners(map, eventName)
       );
 
       if (onClick) {
-        map.addListener("click", onClick);
+        map.addListener('click', onClick);
       }
 
       if (onIdle) {
-        map.addListener("idle", () => onIdle(map));
+        map.addListener('idle', () => onIdle(map));
       }
     }
   }, [map, onClick, onIdle]);
@@ -171,12 +204,28 @@ const Map: React.FC<MapProps> = ({
   );
 };
 
-const Marker: React.FC<google.maps.MarkerOptions> = (options) => {
+interface MarkerProps extends google.maps.MarkerOptions {
+  style: { [key: string]: string };
+  onClick?: (e: google.maps.MapMouseEvent) => void;
+  onIdle?: (map: google.maps.Map) => void;
+  onMouseOver?: (map: google.maps.Map) => void;
+  children?: React.ReactNode;
+}
+const Marker: React.FC<MarkerProps> = ({
+  onClick,
+  onIdle,
+  children,
+  style,
+  ...options
+}) => {
   const [marker, setMarker] = React.useState<google.maps.Marker>();
 
   React.useEffect(() => {
     if (!marker) {
       setMarker(new google.maps.Marker());
+    }
+    if (marker && onClick) {
+      google.maps.event.addListener(marker, 'click', onClick);
     }
 
     // remove marker from map on unmount
@@ -231,10 +280,9 @@ function useDeepCompareEffectForMaps(
   React.useEffect(callback, dependencies.map(useDeepCompareMemoize));
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  const root = createRoot(document.getElementById("root")!);
+window.addEventListener('DOMContentLoaded', () => {
+  const root = createRoot(document.getElementById('root')!);
   root.render(<App />);
 });
-
 
 export {};
