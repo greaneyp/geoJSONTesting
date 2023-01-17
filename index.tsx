@@ -60,7 +60,6 @@ const App: React.VFC = () => {
   const handleContextMenu = (event) => {
     event.preventDefault();
     let objectIndex = event.currentTarget.getAttribute('id');
-    console.log(clicks[objectIndex]);
     setCenter(clicks[objectIndex]);
     setZoom(12);
   };
