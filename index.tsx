@@ -175,15 +175,13 @@ const Map: React.FC<MapProps> = ({
 
   React.useEffect(() => {
     if (map) {
-      ['click', 'idle'].forEach((eventName) =>
-        google.maps.event.clearListeners(map, eventName)
-      );
-
       if (onClick) {
+        google.maps.event.clearListeners(map, 'click');
         map.addListener('click', onClick);
       }
 
       if (onIdle) {
+        google.maps.event.clearListeners(map, 'click');
         map.addListener('idle', () => onIdle(map));
       }
     }
